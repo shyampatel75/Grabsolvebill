@@ -2,6 +2,9 @@
 
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
+from datetime import date
+
 
 class Invoice(models.Model):
 
@@ -52,7 +55,7 @@ class Invoice(models.Model):
     # Created at timestamp
     created_at = models.DateTimeField(default=timezone.now)
 
-    def __str__(self):
+    def _str_(self):
         return self.invoice_number
 
 
@@ -76,7 +79,9 @@ class Setting(models.Model):
     # Company Logo
     logo = models.ImageField(upload_to='', null=True, blank=True)
 
-    def __str__(self):
+    last_invoice_number = models.IntegerField(default=0)
+
+    def _str_(self):
         return f"{self.seller_name} - Settings"
 
 
@@ -86,7 +91,7 @@ class Statement(models.Model):
     notice = models.TextField(blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
-    def __str__(self):
+    def _str_(self):
         return f"Statement ({self.date}) - Invoice {self.invoice.invoice_number}"
 
     @property
@@ -103,5 +108,73 @@ class Deposit(models.Model):
     deposit_date = models.DateField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def __str__(self):
+    def _str_(self):
         return f"₹{self.amount} on {self.deposit_date} for Statement {self.statement.id}"
+
+class Buyer(models.Model):
+    buyer_name = models.CharField(max_length=255, null=True, blank=True) 
+    invoice_id = models.CharField(max_length=50, null=True, blank=True)
+    transaction_date = models.DateField(null=True, blank=True)  # Temporary
+    notice = models.CharField(max_length=255, null=False, default="")
+    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.buyer_name} - {self.invoice_id or 'No Invoice'}"
+
+
+class CompanyBill(models.Model):
+    company_name = models.CharField(max_length=255, default='Unknown')
+    transaction_date = models.DateField(default=timezone.now)  # Changed from selected_date
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    notice = models.TextField(default="No remarks")
+
+    def __str__(self):
+        return self.company_name
+
+
+
+class Salary(models.Model):
+    salary_newname = models.CharField(max_length=100, default="N/A")
+    salary_name = models.CharField(max_length=255)
+    salary_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    salary_date = models.DateField()
+
+    def _str_(self):
+        return f"{self.salary_name} Salary"
+
+
+class Other(models.Model):
+    other_date = models.DateField()
+    other_notice = models.TextField()
+    other_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def _str_(self):
+        return f"Other transaction on {self.other_date}"
+
+# for profile page 
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    email = models.EmailField(unique=True)
+    mobile_number = models.CharField(max_length=15)
+    profile_picture1 = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    profile_picture2 = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def _str_(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'User Profile'
+        verbose_name_plural = 'User Profiles'
+
+
+
+
+class BankingDeposit(models.Model):
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
+
+    def __str__(self):
+        return f"{self.amount} on {self.date}"
